@@ -16,7 +16,10 @@ void main()
     // gl_Position = transform * vec4(vertexPosition, 1.0f);
     // gl_Position = projection * view * model * vec4(vertexPosition, 1.0);
     gl_Position = transform * (projection * view * model * vec4(vertexPosition, 1.0));
-    // gl_Position = vec4(vertexPosition.x, vertexPosition.y, vertexPosition.z, 1.0);
 
-    color = vec4(0.2, 0.2, 0.2, 1.0);
+    // color = vec4(0.2, 0.2, 0.2, 1.0);
+    // color = vec4(0.0, 0.44, 0.45, 1.0);
+    // test color
+    color = vec4(0.16, 0.16, 0.16, 1.0);
+    
 }
