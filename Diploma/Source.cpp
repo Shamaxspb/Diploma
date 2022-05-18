@@ -134,7 +134,7 @@ int main()
 		cout << "ERROR:\tGLAD initialization failed" << endl;
 		return -1;
 	}
-
+	
 	// configure global opengl state
 	// -----------------------------
 	glEnable(GL_DEPTH_TEST);
@@ -278,7 +278,7 @@ int main()
 
 		// input
 		processInput(window);
-
+		
 		// RENDER
 		// background color
 		//glClearColor(0.63f, 0.46f, 0.84f, 1.0f);	// light purple
@@ -292,7 +292,7 @@ int main()
 		// projection matrix 
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)START_WINDOW_WIDTH / (float)START_WINDOW_HEIGHT, 0.1f, 100.0f);
 		myShader.setMat4("projection", projection);
-
+		
 		// camera / view matrix
 		glm::mat4 view = camera.GetViewMatrix();
 		myShader.setMat4("view", view);
@@ -301,7 +301,7 @@ int main()
 		glm::mat4 model = glm::mat4(1.0f); // set identity matrix is neñessarily
 		model = glm::rotate(model, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		myShader.setMat4("model", model);
-
+				
 		// WATER OBJECT TRANSFORMATION MATRICES
 		glm::mat4 transform = glm::mat4(1.0f);	// identity matrix
 		//transform = glm::rotate(transform, glm::radians(-30.0f), glm::vec3(1.0, 0.0, 0.0));					// rotate to a certain angle
