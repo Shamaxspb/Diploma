@@ -6,6 +6,7 @@
 #include<glm/gtc/type_ptr.hpp>
 
 #include<ShaderProgram.h>
+#include<Camera.h>
 
 #include<iostream>
 #include<fstream>
@@ -41,31 +42,16 @@ const int START_WINDOW_WIDTH = 1440;	// created window width
 const int START_WINDOW_HEIGHT = 900;	// created window height
 
 // camera
-glm::vec3 cameraPosition	= glm::vec3(0.0f, 0.0f, 3.0f);	// camera position
-glm::vec3 cameraFront		= glm::vec3(0.0f, 0.0f, -1.0f);	// camera direction
-glm::vec3 cameraUp			= glm::vec3(0.0f, 1.0f, 0.0f);	// camera up vector
-
-// camera variables (outdated but i dont wanna delete)
-/*		glm::vec3 cameraTarget		= glm::vec3(0.0f, 0.0f, 0.0f);							// scene origin
-		glm::vec3 cameraPosition	= glm::vec3(0.0f, 0.0f, 3.0f);							// camera position
-		glm::vec3 cameraFront	= glm::normalize(cameraPosition - cameraTarget);			// direction	(positive z-axis)
-		glm::vec3 up				= glm::vec3(0.0f, 0.1f, 0.0f);							// temporary up vector (to form right vector)
-		glm::vec3 cameraRight		= glm::normalize(glm::cross(up, cameraFront));			// right		(positive x-axis)
-		glm::vec3 cameraUp			= glm::normalize(glm::cross(cameraRight, cameraFront));	// up			(positive y-axis)*/
-
-// timing
-float deltaTime = 0.0f;
-float lastFrame = 0.0f;
-
-// mouse
-float yaw = -90.0f;		// turn left/right
-float pitch;			// look up/down
-// initial mouse coordinates (cursor in the middle of the screen, such values because of resolution)
-float lastX = 720, lastY = 450;
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+// initial mouse coordinates
+float lastX = START_WINDOW_WIDTH / 2.0f;
+float lastY = START_WINDOW_HEIGHT / 2.0f;
 bool firstMouse = true;	// if the first recieve of mouse input
 
-// fov
-float FoV = 45.0f;
+// timing
+float deltaTime = 0.0f; // time between current frame and last frame
+float lastFrame = 0.0f;
+
 
 class Vector3d
 {
@@ -136,6 +122,11 @@ int main()
 	}
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetScrollCallback(window, scroll_callback);
+
+	// tell GLFW to capture mouse
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	// check GLAD
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -143,19 +134,20 @@ int main()
 		cout << "ERROR:\tGLAD initialization failed" << endl;
 		return -1;
 	}
-
-	// TEST FIELD +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-
-
-	// TEST FIELD ---------------------------------------------------------------------------------------------------------------------------------
-
+	
 	// configure global opengl state
 	// -----------------------------
 	glEnable(GL_DEPTH_TEST);
 
 	// shader program compiling and linking
 	Shader myShader("myVertexShader.vs", "myFragmentShader.fs");
+
+	// basic triangle (test)
+	float goodOldTriangle[] = {
+		-0.5f, -0.5f, 0.0f,	// A
+		 0.0f,  0.5f, 0.0f,	// B
+		 0.5f, -0.5f, 0.0f	// C
+	};
 
 	////test mesh (20 triangles in world coordinates)
 	//float test2SquareVertices[] = {
@@ -186,7 +178,7 @@ int main()
 
 	// creating mesh (20 triangles in NDC)
 	float test2SquareVertices[] = {
-		// position			// indicies of vertices
+		// position				// indicies of vertices
 		-1.0f,  0.6f,  0.5f,	// A - 0 
 		-1.0f, -0.6f,  0.5f,	// B - 1
 		-0.8f,  0.6f, -0.5f,	// C - 2
@@ -234,13 +226,7 @@ int main()
 		18, 21, 20	// triangle SVU
 	};
 
-	// basic triangle
-	float goodOldTriangle[] = {
-		-0.5f, -0.5f, 0.0f,	// A
-		 0.0f,  0.5f, 0.0f,	// B
-		 0.5f, -0.5f, 0.0f	// C
-	};
-
+	// PASS DATA TO GPU
 	unsigned int VAO, VBO, EBO;
 
 	// create and bind VAO
@@ -264,7 +250,6 @@ int main()
 	/*unsigned int posAttrib = glGetAttribLocation(static Shader::ID, "vertexPosition");
 	unsigned int colAttrib = glGetAttribLocation(Shader::ID, "vertexColor");*/
 
-
 	// position attribute
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
@@ -274,17 +259,11 @@ int main()
 
 	myShader.Use();
 
-	// type zone start
-	
-	
+	// TEST FIELD +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	// type zone end
 
-	// projection matrix (no need to put this matrix in loop since projection matrix rarely changes)
-	glm::mat4 projection = glm::mat4(1.0f);
-	//projection = glm::perspective(glm::radians(45.0f), (float)START_WINDOW_WIDTH / (float)START_WINDOW_HEIGHT, 0.1f, 100.0f);
-	//									fov				  (aspect ratio	1367		/				768)	   near  far
-	
+
+	// TEST FIELD ---------------------------------------------------------------------------------------------------------------------------------
 
 	// uncomment this call to draw in wireframe polygons.
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -299,10 +278,8 @@ int main()
 
 		// input
 		processInput(window);
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-		glfwSetCursorPosCallback(window, mouse_callback); // i assume this line of code should be here
-		glfwSetScrollCallback(window, scroll_callback);
-
+		
+		// RENDER
 		// background color
 		//glClearColor(0.63f, 0.46f, 0.84f, 1.0f);	// light purple
 		//glClearColor(0.24f, 0.43f, 0.69f, 1.0f);	// sky above water
@@ -312,38 +289,26 @@ int main()
 		// activate shader
 		myShader.Use();
 
-		// COORDINATE SYSTEM TRANSFORMATION
-		// model matrix
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::rotate(model, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-
-		// CAMERA (VIEW SPACE)
-		// lookAt vector
-		glm::mat4 view = glm::lookAt(
-			cameraPosition,						// position
-			cameraPosition + cameraFront,		// direction
-			cameraUp);							// up vector		
-		
-		// retrieve matrix uniform locations
-		unsigned int modelLoc = glGetUniformLocation(myShader.ID, "model");
-		unsigned int viewLoc = glGetUniformLocation(myShader.ID, "view");
-		// pass matrices to shader
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+		// projection matrix 
+		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)START_WINDOW_WIDTH / (float)START_WINDOW_HEIGHT, 0.1f, 100.0f);
 		myShader.setMat4("projection", projection);
+		
+		// camera / view matrix
+		glm::mat4 view = camera.GetViewMatrix();
+		myShader.setMat4("view", view);
 
-		// fov changing
-		projection = glm::perspective(glm::radians(FoV), (float)START_WINDOW_WIDTH / (float)START_WINDOW_HEIGHT, 0.1f, 100.0f);
-
+		// model matrix
+		glm::mat4 model = glm::mat4(1.0f); // set identity matrix is neñessarily
+		model = glm::rotate(model, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		myShader.setMat4("model", model);
+				
 		// WATER OBJECT TRANSFORMATION MATRICES
 		glm::mat4 transform = glm::mat4(1.0f);	// identity matrix
-		//transform = glm::rotate(transform, glm::radians(-30.0f), glm::vec3(1.0, 0.0, 0.0));				// rotate to a certain angle
-		//transform = glm::rotate(transform, (float)glfwGetTime(), glm::vec3(1.0, 0.0, 0.0));				// constant rotation
-		//transform = glm::scale(transform, glm::vec3(0.5, 0.5, 0.5));										// scale
+		//transform = glm::rotate(transform, glm::radians(-30.0f), glm::vec3(1.0, 0.0, 0.0));					// rotate to a certain angle
+		//transform = glm::rotate(transform, (float)glfwGetTime(), glm::vec3(1.0, 0.0, 0.0));					// constant rotation
+		//transform = glm::scale(transform, glm::vec3(0.5, 0.5, 0.5));											// scale
 		//transform = glm::translate(transform, glm::vec3(0.1f, 0.0f, 0.0f) * ((float)glfwGetTime() * 1.0f));	// TRANSLATES RIGHT BY THIS
-		// get matrix's uniform location and set matrix		
-		unsigned int transformLoc = glGetUniformLocation(myShader.ID, "transform");
-		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
+		myShader.setMat4("transform", transform);
 
 		// render
 		glBindVertexArray(VAO);
@@ -356,24 +321,30 @@ int main()
 		glfwPollEvents();
 	}
 
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &EBO);
+
+	glfwTerminate();
 	return 0;
 }
 
 // function block
 void processInput(GLFWwindow* window)
 {
+	// ESC to close the window
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
-	float cameraSpeed = static_cast<float>(2.5f * deltaTime);
+	// WASD to move with keyboard
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		cameraPosition += cameraSpeed * cameraFront;
+		camera.ProcessKeyboard(FORWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		cameraPosition -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+		camera.ProcessKeyboard(LEFT, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		cameraPosition -= cameraSpeed * cameraFront;
+		camera.ProcessKeyboard(BACKWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		cameraPosition += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+		camera.ProcessKeyboard(RIGHT, deltaTime);
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -381,8 +352,11 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 	glViewport(0, 0, width, height);
 }
 
-void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
+	float xpos = static_cast<float>(xposIn);
+	float ypos = static_cast<float>(yposIn);
+
 	// preventing cursor jumps
 	if (firstMouse)
 	{
@@ -391,39 +365,16 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 		firstMouse = false;
 	}
 
-	// 1. offset from the last frame
+	// offset from the last frame
 	float xOffset = xpos - lastX;
 	float yOffset = lastY - ypos; // reversed since y ranges bottom to top
 	lastX = xpos;
 	lastY = ypos;
 
-	const float sensitvity = 0.1f;
-	xOffset *= sensitvity;
-	yOffset *= sensitvity;
-
-	// 2. Add offset values to yaw/pitch values
-	yaw += xOffset;
-	pitch += yOffset;
-
-	// 3. constraints
-	if (pitch > 89.0f)
-		pitch = 89.0f;
-	if (pitch < -89.0f)
-		pitch = -89.0f;
-
-	// 4. calculating direction vector
-	glm::vec3 direction;
-	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-	direction.y = sin(glm::radians(pitch));
-	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-	cameraFront = glm::normalize(direction);
+	camera.ProcessMouseMovement(xOffset, yOffset);
 }
 
 void scroll_callback(GLFWwindow* window, double xOffset, double yOffset)
 {
-	FoV -= (float)yOffset;
-	if (FoV < 1.0f)
-		FoV = 1.0f;
-	if (FoV > 45.0f)
-		FoV = 45.0f;
+	camera.ProcessMouseScroll(static_cast<float>(yOffset));
 }
