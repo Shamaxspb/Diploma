@@ -70,12 +70,21 @@ public:
 
 int main()
 {
+	// overall:
+	// 4728 values in waveVertices (theese are coordinates of vertices)
+	// 1576 vertices
+	// 1576 unique indicies
+	// 787 triangles that form
+	// 1574 polygons
+	// thus
+	// 4722 values in waveIndicies
+
 	// CREATE VERTICES VECTOR ===============================================================================
-	// variables to fill verticesContainer
-	vector<float> verticesContainer;	// vector with all vertices
-	float x = 0;
+	// variables to fill waveVertices
+	vector<float> waveVertices;	// vector with all vertices
+	float x	= 0;
 	float& x1 = x, & x2 = x;
-	float y1 = 16, y2 = y1 - 12;
+	float y1 = 20, y2 = y1 - 18; // width of the polygon
 	float z = 0;
 	float& z1 = z, & z2 = z;
 	fstream waveFile;
@@ -93,17 +102,37 @@ int main()
 	{
 		waveFile >> z;
 
-		verticesContainer.push_back(x1);
-		verticesContainer.push_back(y1);
-		verticesContainer.push_back(z1);
+		waveVertices.push_back(x1);
+		waveVertices.push_back(y1);
+		waveVertices.push_back(z1);
 
-		verticesContainer.push_back(x2);
-		verticesContainer.push_back(y2);
-		verticesContainer.push_back(z2);
+		waveVertices.push_back(x2);
+		waveVertices.push_back(y2);
+		waveVertices.push_back(z2);
 
-		x += 6;
+		x += 8; // length of the polygon
 	}
-	//PrintVector(verticesContainer);
+	//PrintVector(waveVertices);
+
+	// CREATE INDICIES VECTOR ===============================================================================
+	vector<int> waveIndicies;
+	unsigned int index = 0;
+	for (int i = 0; i < 787; i++)
+	{
+		waveIndicies.push_back(index);
+		index += 1;
+		waveIndicies.push_back(index);
+		index += 2;
+		waveIndicies.push_back(index);
+		index -= 3;
+		waveIndicies.push_back(index);
+		index += 3;
+		waveIndicies.push_back(index);
+		index -= 1;
+		waveIndicies.push_back(index);
+		index += 0;
+	}
+	//PrintVector(waveIndicies);
 
 	// initializing GLFW ====================================================================================
 	glfwInit();
@@ -149,7 +178,7 @@ int main()
 		 0.5f, -0.5f, 0.0f	// C
 	};
 
-	////test mesh (20 triangles in world coordinates)
+	//test mesh (20 triangles in world coordinates)
 	//float test2SquareVertices[] = {
 	//	// position				// indicies of vertices
 	//	0.0f,  16.0f, -40.911f,	// A - 0 
@@ -173,37 +202,88 @@ int main()
 	//	54.0f, 16.0f,  32.662f,	// S - 18
 	//	54.0f, 4.0f,   32.662f,	// T - 19
 	//	60.0f, 16.0f,  34.669f,	// U - 20
-	//	60.0f, 4.0f,   34.669f,	// V - 21
+	//	60.0f, 4.0f,   34.669f	// V - 21
 	//};
+
+	float k = 0.0f;
 
 	// creating mesh (20 triangles in NDC)
 	float test2SquareVertices[] = {
 		// position				// indicies of vertices
-		-1.0f,  0.6f,  0.5f,	// A - 0 
-		-1.0f, -0.6f,  0.5f,	// B - 1
-		-0.8f,  0.6f, -0.5f,	// C - 2
-		-0.8f, -0.6f, -0.5f,	// D - 3
-		-0.6f,  0.6f,  0.5f,	// E - 4
-		-0.6f, -0.6f,  0.5f,	// F - 5
-		-0.4f,  0.6f, -0.5f,	// G - 6
-		-0.4f, -0.6f, -0.5f,	// H - 7
-		-0.2f,  0.6f,  0.5f,	// I - 8
-		-0.2f, -0.6f,  0.5f,	// J - 9
-		 0.0f,  0.6f, -0.5f,	// K - 10
-		 0.0f, -0.6f, -0.5f,	// L - 11
-		 0.2f,  0.6f,  0.5f,	// M - 12
-		 0.2f, -0.6f,  0.5f,	// N - 13
-		 0.4f,  0.6f, -0.5f,	// O - 14
-		 0.4f, -0.6f, -0.5f,	// P - 15
-		 0.6f,  0.6f,  0.5f,	// Q - 16
-		 0.6f, -0.6f,  0.5f,	// R - 17
-		 0.8f,  0.6f, -0.5f,	// S - 18
-		 0.8f, -0.6f, -0.5f,	// T - 19
-		 1.0f,  0.6f,  0.5f,	// U - 20
-		 1.0f, -0.6f,  0.5f,	// V - 21
+		-1.0f,  0.6f,  0.0f,	// A - 0 
+		-1.0f, -0.6f,  0.0f,	// B - 1
+		-0.8f,  0.6f, -0.2f,	// C - 2
+		-0.8f, -0.6f, -0.2f,	// D - 3
+		-0.6f,  0.6f,  0.2f,	// E - 4
+		-0.6f, -0.6f,  0.2f,	// F - 5
+		-0.4f,  0.6f, -0.2f,	// G - 6
+		-0.4f, -0.6f, -0.2f,	// H - 7
+		-0.2f,  0.6f,  0.2f,	// I - 8
+		-0.2f, -0.6f,  0.2f,	// J - 9
+		 0.0f,  0.6f, -0.2f,	// K - 10
+		 0.0f, -0.6f, -0.2f,	// L - 11
+		 0.2f,  0.6f,  0.2f,	// M - 12
+		 0.2f, -0.6f,  0.2f,	// N - 13
+		 0.4f,  0.6f, -0.2f,	// O - 14
+		 0.4f, -0.6f, -0.2f,	// P - 15
+		 0.6f,  0.6f,  0.2f,	// Q - 16
+		 0.6f, -0.6f,  0.2f,	// R - 17
+		 0.8f,  0.6f, -0.2f,	// S - 18
+		 0.8f, -0.6f, -0.2f,	// T - 19
+		 1.0f,  0.6f,  0.0f,	// U - 20
+		 1.0f, -0.6f,  0.0f		// V - 21
 	};
 
 	unsigned int test2SquareIndicies[] = {
+		0, 1, 3,	// triangle ABD
+		0, 3, 2,	// triangle ADC
+		2, 3, 5,	// triangle CDF
+		2, 5, 4,	// triangle CFE
+		4, 5, 7,	// triangle EFH
+		4, 7, 6,	// triangle EHG
+		6, 7, 9,	// triangle GHJ
+		6, 9, 8,	// triangle GJI
+		8, 9, 11,	// triangle IJL
+		8, 11, 10,	// triangle ILK
+		10, 11, 13,	// triangle KLN
+		10, 13, 12,	// triangle KNM
+		12, 13, 15,	// triangle MNP
+		12, 15, 14,	// triangle MPO
+		14, 15, 17,	// triangle OPR
+		14, 17, 16,	// triangle ORQ
+		16, 17, 19,	// triangle QRT
+		16, 19, 18,	// triangle QTS
+		18, 19, 21,	// triangle STV
+		18, 21, 20	// triangle SVU
+	};
+
+	vector<float> waveMesh = {
+		// position				// indicies of vertices
+		-1.0f,  0.6f,  0.0f,	// A - 0 
+		-1.0f, -0.6f,  0.0f,	// B - 1
+		-0.8f,  0.6f, -0.2f,	// C - 2
+		-0.8f, -0.6f, -0.2f,	// D - 3
+		-0.6f,  0.6f,  0.2f,	// E - 4
+		-0.6f, -0.6f,  0.2f,	// F - 5
+		-0.4f,  0.6f, -0.2f,	// G - 6
+		-0.4f, -0.6f, -0.2f,	// H - 7
+		-0.2f,  0.6f,  0.2f,	// I - 8
+		-0.2f, -0.6f,  0.2f,	// J - 9
+		 0.0f,  0.6f, -0.2f,	// K - 10
+		 0.0f, -0.6f, -0.2f,	// L - 11
+		 0.2f,  0.6f,  0.2f,	// M - 12
+		 0.2f, -0.6f,  0.2f,	// N - 13
+		 0.4f,  0.6f, -0.2f,	// O - 14
+		 0.4f, -0.6f, -0.2f,	// P - 15
+		 0.6f,  0.6f,  0.2f,	// Q - 16
+		 0.6f, -0.6f,  0.2f,	// R - 17
+		 0.8f,  0.6f, -0.2f,	// S - 18
+		 0.8f, -0.6f, -0.2f,	// T - 19
+		 1.0f,  0.6f,  0.0f,	// U - 20
+		 1.0f, -0.6f,  0.0f	// V - 21
+	};
+
+	vector<int> waveMeshIndicies = {
 		0, 1, 3,	// triangle ABD
 		0, 3, 2,	// triangle ADC
 		2, 3, 5,	// triangle CDF
@@ -237,21 +317,19 @@ int main()
 	glBindVertexArray(VAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(test2SquareVertices), test2SquareVertices, GL_STATIC_DRAW); //actual
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(unindexedPolygon), unindexedPolygon, GL_STATIC_DRAW);
 	//allocate memory in GPU and copy there data from testSquareVertices array
-	glBufferData(GL_ARRAY_BUFFER, sizeof(test2SquareVertices), test2SquareVertices, GL_STATIC_DRAW);
-	//glBufferData(GL_ARRAY_BUFFER, verticesContainer.size(), &verticesContainer[0], GL_STATIC_DRAW);
+	//glBufferData(GL_ARRAY_BUFFER, waveVertices.size() * sizeof(waveVertices), &waveMesh.front(), GL_STATIC_DRAW);
 
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	// allocate memory in GPU and copy there data from testSquareIndicies array
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(test2SquareIndicies), test2SquareIndicies, GL_STATIC_DRAW);
-
-	// finding attribs
-	/*unsigned int posAttrib = glGetAttribLocation(static Shader::ID, "vertexPosition");
-	unsigned int colAttrib = glGetAttribLocation(Shader::ID, "vertexColor");*/
+	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, waveIndicies.size() * sizeof(waveIndicies), &waveIndicies.front(), GL_STATIC_DRAW);
 
 	// position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 3 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 0, (void*)0);
 	glEnableVertexAttribArray(0);
 	// color attribute
 	/*glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
@@ -272,9 +350,9 @@ int main()
 	while (!glfwWindowShouldClose(window))
 	{
 		//per-frame logic
-		float currentFrame = static_cast<float>(glfwGetTime());	// getting current time of frame
-		deltaTime = currentFrame - lastFrame;
-		lastFrame = currentFrame;
+		float currentFrame	= static_cast<float>(glfwGetTime());	// getting current time of frame
+		deltaTime			= currentFrame - lastFrame;
+		lastFrame			= currentFrame;
 
 		// input
 		processInput(window);
@@ -307,12 +385,13 @@ int main()
 		//transform = glm::rotate(transform, glm::radians(-30.0f), glm::vec3(1.0, 0.0, 0.0));					// rotate to a certain angle
 		//transform = glm::rotate(transform, (float)glfwGetTime(), glm::vec3(1.0, 0.0, 0.0));					// constant rotation
 		//transform = glm::scale(transform, glm::vec3(0.5, 0.5, 0.5));											// scale
-		//transform = glm::translate(transform, glm::vec3(0.1f, 0.0f, 0.0f) * ((float)glfwGetTime() * 1.0f));	// TRANSLATES RIGHT BY THIS
+		//transform = glm::translate(transform, glm::vec3(0.1f, 0.0f, 0.0f) * ((float)glfwGetTime() * 0.5f));	// TRANSLATES RIGHT BY THIS
 		myShader.setMat4("transform", transform);
 
 		// render
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, 60, GL_UNSIGNED_INT, 0);	// for 20 triangles (indexed)
+		//glDrawElements(GL_TRIANGLES, 4722, GL_UNSIGNED_INT, 0);	// for water mesh
 		//glDrawArrays(GL_TRIANGLES, 0, 3);						// triangle unidexed
 		glBindVertexArray(0);
 
@@ -360,16 +439,16 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 	// preventing cursor jumps
 	if (firstMouse)
 	{
-		lastX = xpos;
-		lastY = ypos;
-		firstMouse = false;
+		lastX		= xpos;
+		lastY		= ypos;
+		firstMouse	= false;
 	}
 
 	// offset from the last frame
-	float xOffset = xpos - lastX;
-	float yOffset = lastY - ypos; // reversed since y ranges bottom to top
-	lastX = xpos;
-	lastY = ypos;
+	float xOffset	= xpos - lastX;
+	float yOffset	= lastY - ypos; // reversed since y ranges bottom to top
+	lastX			= xpos;
+	lastY			= ypos;
 
 	camera.ProcessMouseMovement(xOffset, yOffset);
 }
