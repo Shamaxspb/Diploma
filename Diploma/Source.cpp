@@ -81,12 +81,13 @@ int main()
 
 	// CREATE VERTICES VECTOR ===============================================================================
 	// variables to fill waveVertices
-	vector<float> waveVertices;	// vector with all vertices
+	
 	float x	= 0;
 	float& x1 = x, & x2 = x;
-	float y1 = 20, y2 = y1 - 18; // width of the polygon
-	float z = 0;
+	float y1 = 500, y2 = -500;	// width of the polygon
+	float z = 0;				// initial z value that will be filled with data from text file
 	float& z1 = z, & z2 = z;
+
 	fstream waveFile;
 
 	// read file
@@ -98,6 +99,7 @@ int main()
 	}
 
 	// fill vector
+	vector<float> waveVertices;	// vector with all vertices
 	while (!waveFile.eof())
 	{
 		waveFile >> z;
@@ -112,7 +114,7 @@ int main()
 
 		x += 8; // length of the polygon
 	}
-	//PrintVector(waveVertices);
+	PrintVector(waveVertices);
 
 	// CREATE INDICIES VECTOR ===============================================================================
 	vector<int> waveIndicies;
@@ -317,16 +319,16 @@ int main()
 	glBindVertexArray(VAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(test2SquareVertices), test2SquareVertices, GL_STATIC_DRAW); //actual
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(test2SquareVertices), test2SquareVertices, GL_STATIC_DRAW); //actual
 	//glBufferData(GL_ARRAY_BUFFER, sizeof(unindexedPolygon), unindexedPolygon, GL_STATIC_DRAW);
 	//allocate memory in GPU and copy there data from testSquareVertices array
-	//glBufferData(GL_ARRAY_BUFFER, waveVertices.size() * sizeof(waveVertices), &waveMesh.front(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, waveVertices.size() * sizeof(waveVertices), &waveVertices.front(), GL_STATIC_DRAW);
 
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	// allocate memory in GPU and copy there data from testSquareIndicies array
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(test2SquareIndicies), test2SquareIndicies, GL_STATIC_DRAW);
-	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, waveIndicies.size() * sizeof(waveIndicies), &waveIndicies.front(), GL_STATIC_DRAW);
+	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(test2SquareIndicies), test2SquareIndicies, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, waveIndicies.size() * sizeof(waveIndicies), &waveIndicies.front(), GL_STATIC_DRAW);
 
 	// position attribute
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 0, (void*)0);
@@ -368,7 +370,7 @@ int main()
 		myShader.Use();
 
 		// projection matrix 
-		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)START_WINDOW_WIDTH / (float)START_WINDOW_HEIGHT, 0.1f, 100.0f);
+		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)START_WINDOW_WIDTH / (float)START_WINDOW_HEIGHT, 0.1f, 10000.0f);
 		myShader.setMat4("projection", projection);
 		
 		// camera / view matrix
@@ -377,7 +379,7 @@ int main()
 
 		// model matrix
 		glm::mat4 model = glm::mat4(1.0f); // set identity matrix is neñessarily
-		model = glm::rotate(model, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		myShader.setMat4("model", model);
 				
 		// WATER OBJECT TRANSFORMATION MATRICES
@@ -390,8 +392,8 @@ int main()
 
 		// render
 		glBindVertexArray(VAO);
-		glDrawElements(GL_TRIANGLES, 60, GL_UNSIGNED_INT, 0);	// for 20 triangles (indexed)
-		//glDrawElements(GL_TRIANGLES, 4722, GL_UNSIGNED_INT, 0);	// for water mesh
+		//glDrawElements(GL_TRIANGLES, 60, GL_UNSIGNED_INT, 0);	// for 20 triangles (indexed)
+		glDrawElements(GL_TRIANGLES, 4722, GL_UNSIGNED_INT, 0);	// for water mesh
 		//glDrawArrays(GL_TRIANGLES, 0, 3);						// triangle unidexed
 		glBindVertexArray(0);
 
