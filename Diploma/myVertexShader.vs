@@ -20,6 +20,7 @@ void main()
     // color = vec4(0.2, 0.2, 0.2, 1.0);
     // color = vec4(0.0, 0.44, 0.45, 1.0);
     // test color
-    color = vec4(0.16, 0.16, 0.16, 1.0);
+    // color = vec4(0.16, 0.16, 0.16, 1.0);
+    color = vec4(vertexColor, 1.0);
     
 }
