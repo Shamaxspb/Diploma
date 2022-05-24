@@ -14,20 +14,15 @@
 #include<vector>
 #include<iterator>
 
-
-using namespace std;
-
-
 // function for debug
 template <typename T>
-void PrintVector(const vector<T>& vec)
+void PrintVector(const std::vector<T>& vec)
 {
 	for (const auto var : vec)
 	{
-		cout << var << endl;
+		std::cout << var << std::endl;
 	}
 }
-
 
 // function prototypes
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -35,14 +30,13 @@ void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xOffset, double yOffset);
 
-
 // GLOBAL VARIABLES
 // screen
 const int START_WINDOW_WIDTH = 1440;	// created window width
 const int START_WINDOW_HEIGHT = 900;	// created window height
 
 // camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera camera(glm::vec3(0.0f, 500.0f, -500.0f));
 // initial mouse coordinates
 float lastX = START_WINDOW_WIDTH / 2.0f;
 float lastY = START_WINDOW_HEIGHT / 2.0f;
@@ -52,41 +46,16 @@ bool firstMouse = true;	// if the first recieve of mouse input
 float deltaTime = 0.0f; // time between current frame and last frame
 float lastFrame = 0.0f;
 
-
-class Vector3d
-{
-private:
-	float x;
-	float y;
-	float z;
-
-public:
-	Vector3d(float X, float Y, float Z) : x(X), y(Y), z(Z) {}
-	float GetX() { return x; }
-	float GetY() { return y; }
-	float GetZ() { return z; }
-};
-
-
 int main()
 {
-	// IN TOTAL:
-	// 4728 values in waveVertices (theese are coordinates of vertices)
-	// 1576 vertices
-	// 1576 unique indicies
-	// 787 triangles that form
-	// 1574 polygons
-	// thus
-	// 4722 values in waveIndicies
-
 	// CREATE VERTICES VECTOR ===============================================================================
 	// variables to fill waveVertices vector:
 	// - vector with all vertices
-	vector<float> waveVertices;
-	// - coordinates
+	std::vector<float> waveVertices;
+	// - positions
 	float x	= 0;
 	float& x1 = x, & x2 = x;
-	float y1 = 1000, y2 = -1000;	// width of the polygon
+	float y1 = 2000, y2 = -2000;	// width of the polygon
 	float z = 0;					// initial z value that will be filled with data from text file
 	float& z1 = z, & z2 = z;
 	// - colors
@@ -94,15 +63,15 @@ int main()
 	float r2 = 0.051f; float g2 = 0.388f; float b2 = 0.514f;	// color 2
 	float r3 = 0.216f; float g3 = 0.424f; float b3 = 0.608f;	// color 3
 	float r4 = 0.145f; float g4 = 0.259f; float b4 = 0.275f;	// color 4
-	//float r4 = 0.659f; float g4 = 0.839f; float b4 = 0.937f;	// color 4
+	//float r4 = 0.659f; float g4 = 0.839f; float b4 = 0.937f;	// color 4 (alternative)
 	
-	fstream waveFile;
+	std::fstream waveFile;
 
 	// read file
-	waveFile.open("WaveHeight.txt", fstream::in);
+	waveFile.open("WaveHeight.txt", std::fstream::in);
 	if (!waveFile.is_open())
 	{
-		cout << "ERROR\tcouldn't open WaveHeight.txt" << endl;
+		std::cout << "ERROR\tcouldn't open WaveHeight.txt" << std::endl;
 		return -1;
 	}
 
@@ -171,7 +140,7 @@ int main()
 	//PrintVector(waveVertices);
 
 	// CREATE INDICIES VECTOR ===============================================================================
-	vector<int> waveIndicies;
+	std::vector<int> waveIndicies;
 	unsigned int index = 0;
 	for (int i = 0; i < 787; i++)
 	{
@@ -190,8 +159,8 @@ int main()
 	}
 	//PrintVector(waveIndicies);
 
-	// create vector to blend color of water=================================================================
-	vector<float> testVector = {
+	// mesh to test color blending ==========================================================================
+	std::vector<float> testVector = {
 		//	 coordinates		color
 		//	x	  y		z	  r		  g		  b	
 			0.0f, 1.0f, 0.0f, 0.153f, 0.718f, 0.820f,	// 0 
@@ -206,7 +175,7 @@ int main()
 			4.0f, 0.0f, 0.0f, 0.051f, 0.388f, 0.514f	// 9 
 	};
 
-	vector<int> testIndicies = {
+	std::vector<int> testIndicies = {
 		0, 1, 3,
 		0, 3, 2,
 		2, 3, 5,
@@ -228,7 +197,7 @@ int main()
 	// check window
 	if (window == NULL)
 	{
-		cout << "ERROR\tWindow creation failed" << endl;
+		std::cout << "ERROR\tWindow creation failed" << std::endl;
 		glfwTerminate();
 		return -1;
 	}
@@ -246,7 +215,7 @@ int main()
 	// check GLAD
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
-		cout << "ERROR:\tGLAD initialization failed" << endl;
+		std::cout << "ERROR:\tGLAD initialization failed" << std::endl;
 		return -1;
 	}
 	
@@ -283,7 +252,6 @@ int main()
 		 1.0f,  0.6f,  0.0f,	// U - 20
 		 1.0f, -0.6f,  0.0f		// V - 21
 	};
-
 	unsigned int test2SquareIndicies[] = {
 		0, 1, 3,	// triangle ABD
 		0, 3, 2,	// triangle ADC
@@ -318,28 +286,25 @@ int main()
 	glBindVertexArray(VAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	//allocate memory in GPU and copy there data from testSquareVertices array
-	//glBufferData(GL_ARRAY_BUFFER, sizeof(test2SquareVertices), test2SquareVertices, GL_STATIC_DRAW);
+	// allocate memory in GPU and copy there data from data array
 	glBufferData(GL_ARRAY_BUFFER, waveVertices.size() * sizeof(waveVertices), &waveVertices.front(), GL_STATIC_DRAW);	// actual
 	//glBufferData(GL_ARRAY_BUFFER, testVector.size() * sizeof(testVector), &testVector.front(), GL_STATIC_DRAW);
 
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	// allocate memory in GPU and copy there data from testSquareIndicies array
-	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(test2SquareIndicies), test2SquareIndicies, GL_STATIC_DRAW);
+	// allocate memory in GPU and copy there data from data array
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, waveIndicies.size() * sizeof(waveIndicies), &waveIndicies.front(), GL_STATIC_DRAW);	// actual
 	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, testIndicies.size() * sizeof(testIndicies), &testIndicies.front(), GL_STATIC_DRAW);
 
 	// position attribute
-	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 0, (void*)0);	// actual
-	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 6 * sizeof(testVector[0]), (void*)0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 6 * sizeof(waveVertices[0]), (void*)0);
+	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 6 * sizeof(testVector[0]), (void*)0);	// for color testing
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 6 * sizeof(waveVertices[0]), (void*)0);	// actual
 	glEnableVertexAttribArray(0);
 
 	// color attribute
 	//	there is no ACTUAL since my wave has no color
 	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(testVector[0]), (void*)(3 * sizeof(testVector[0])));
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(waveVertices[0]), (void*)(3 * sizeof(waveVertices[0])));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(waveVertices[0]), (void*)(3 * sizeof(waveVertices[0])));	// actual
 	glEnableVertexAttribArray(1);
 
 	myShader.Use();
@@ -351,7 +316,7 @@ int main()
 	// TEST FIELD ---------------------------------------------------------------------------------------------------------------------------------
 
 	// uncomment this call to draw in wireframe polygons.
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	// render loop ==========================================================================================
 	while (!glfwWindowShouldClose(window))
@@ -366,9 +331,7 @@ int main()
 		
 		// RENDER
 		// background color
-		//glClearColor(0.63f, 0.46f, 0.84f, 1.0f);	// light purple
-		//glClearColor(0.24f, 0.43f, 0.69f, 1.0f);	// sky above water
-		glClearColor(0.72f, 0.79f, 0.96f, 1.0f);	// test (light grey)
+		glClearColor(0.72f, 0.79f, 0.96f, 1.0f);	// light grey
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// activate shader
@@ -385,17 +348,10 @@ int main()
 		// model matrix
 		glm::mat4 model = glm::mat4(1.0f); // set identity matrix is neñessarily
 		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		// WAVE TRANSLATES BY THIS MATRIX (multiplier is the speed of wave)
+		model = glm::translate(model, glm::vec3(-1.0, 0.0, 0.0) * (currentFrame * 175.0f));	
 		myShader.setMat4("model", model);
 				
-		// WATER OBJECT TRANSFORMATION MATRICES
-		glm::mat4 transform = glm::mat4(1.0f);	// identity matrix
-		//transform = glm::rotate(transform, glm::radians(-30.0f), glm::vec3(1.0, 0.0, 0.0));					// rotate to a certain angle
-		//transform = glm::rotate(transform, (float)glfwGetTime(), glm::vec3(1.0, 0.0, 0.0));					// constant rotation
-		//transform = glm::scale(transform, glm::vec3(0.5, 0.5, 0.5));											// scale
-		//transform = glm::translate(transform, glm::vec3(0.1f, 0.0f, 0.0f) * ((float)glfwGetTime() * 0.5f));	// TRANSLATES RIGHT BY THIS
-		//transform = glm::translate(transform, glm::vec3(1.0f, 0.0f, 0.0f) * (float)glfwGetTime() * 0.1f);
-		myShader.setMat4("transform", transform);
-
 		// render
 		glBindVertexArray(VAO);
 		//glDrawElements(GL_TRIANGLES, 60, GL_UNSIGNED_INT, 0);	// for 20 triangles (indexed)
