@@ -8,13 +8,26 @@
 #include<ShaderProgram.h>
 #include<Camera.h>
 
+//#include<assimp/config.h>
+
 #include<iostream>
 #include<fstream>
 #include<string>
 #include<vector>
 #include<iterator>
 
-// function for debug
+class Vertex
+{
+public:
+	Vertex(float X, float Y, float Z) : x(X), y(Y), z(Z) {}
+private:
+	float x;
+	float y;
+	float z;
+};
+
+
+ //function for debug
 template <typename T>
 void PrintVector(const std::vector<T>& vec)
 {
@@ -46,27 +59,91 @@ bool firstMouse = true;	// if the first recieve of mouse input
 float deltaTime = 0.0f; // time between current frame and last frame
 float lastFrame = 0.0f;
 
+// lightning
+glm::vec3 lightPosition(1000.0f, 1700.0f, 2500.0f);	// light sourse position
+
+
 int main()
 {
-	// CREATE VERTICES VECTOR ===============================================================================
+	// READ DATA FROM FILE
+	std::vector<float> InputData;	// vector with all the data
+	std::fstream testData;			// object to read that data
+	testData.open("TestData.txt", std::fstream::in);
+	if (!testData.is_open())
+	{
+		std::cout << "ERROR\tcouldn't open TestData.txt" << std::endl;
+		return -1;
+	}
+	else
+		std::cout << "Successfuly read TestData.txt\n" << std::endl;
+
+	// write data to common vector
+	while (!testData.eof())
+	{
+		float buffer;
+		testData >> buffer;
+		InputData.push_back(buffer);
+	}
+
+	// vectors to fill
+	std::vector<float> waveHeight;		// wave height   data
+	std::vector<float> shipRotation;	// ship rotation data
+	std::vector<float> shipDrifting;	// ship drifting data
+	std::vector<float>::iterator input_it = InputData.begin();
+	for (auto input_it = InputData.begin(); input_it != InputData.end(); ++input_it)
+	{
+		++input_it; // skip first column (âðåìÿ) since it isn't used (yet?)
+		shipRotation.push_back(*input_it);	// Pitch
+		++input_it;
+		shipRotation.push_back(*input_it);	// Roll
+		++input_it;
+		shipDrifting.push_back(*input_it);	// X
+		++input_it;
+		shipDrifting.push_back(*input_it);	// Y
+		++input_it;
+		shipRotation.push_back(*input_it);	// Yaw
+		++input_it;
+		shipDrifting.push_back(*input_it);	// Z
+		++input_it;
+		waveHeight.push_back(*input_it);	// wave height
+	}
+	//PrintVector(shipDrifting);
+	//PrintVector(shipRotation);
+	//PrintVector(waveHeight);
+
+	// CREATE WAVE VERTICES VECTOR ==========================================================================
+
 	// variables to fill waveVertices vector:
-	// - vector with all vertices
-	std::vector<float> waveVertices;
+	std::vector<Vertex> waveVertices;	// - vertices with colors vector
 	// - positions
 	float x	= 0;
 	float& x1 = x, & x2 = x;
-	float y1 = 2000, y2 = -2000;	// width of the polygon
-	float z = 0;					// initial z value that will be filled with data from text file
-	float& z1 = z, & z2 = z;
-	// - colors
-	float r1 = 0.153f; float g1 = 0.718f; float b1 = 0.820f;	// color 1
-	float r2 = 0.051f; float g2 = 0.388f; float b2 = 0.514f;	// color 2
-	float r3 = 0.216f; float g3 = 0.424f; float b3 = 0.608f;	// color 3
-	float r4 = 0.145f; float g4 = 0.259f; float b4 = 0.275f;	// color 4
-	//float r4 = 0.659f; float g4 = 0.839f; float b4 = 0.937f;	// color 4 (alternative)
+	float y1 = 100, y2 = -100;	// width of the polygon
+
+	// - colors (converting to 0:1 scope)
+	/*float r1 = (float)39 / 255, g1 = (float)183 / 255, b1 = (float)209 / 255;	// color 1
+	float r2 = (float)13 / 255, g2 = (float) 99 / 255, b2 = (float)131 / 255;	// color 2
+	float r3 = (float)55 / 255, g3 = (float)108 / 255, b3 = (float)155 / 255;	// color 3
+	float r4 = (float)37 / 255, g4 = (float) 66 / 255, b4 = (float) 70 / 255;	// color 4*/
+	// - TEST colors (converting to 0:1 scope)
+	float r1 = (float) 55 / 255, g1 = (float)219 / 255, b1 = (float)230 / 255;	// color 1 (Turquoise)
+	float r2 = (float)100 / 255, g2 = (float)250 / 255, b2 = (float)255 / 255;	// color 2 (Electric)
+	float r3 = (float) 82 / 255, g3 = (float)230 / 255, b3 = (float)243 / 255;	// color 3 (Spray)
+	float r4 = (float) 21 / 255, g4 = (float)226 / 255, b4 = (float)233 / 255;	// color 4 (Bright turquoise)
+
+	// - normals
+	
+	// filling vector with values
+	// "I wonder if this could be used as triangles to form a normals"
+	auto wave_it = waveHeight.begin();
+	for (; wave_it != waveHeight.end(); ++wave_it)
+	{
+		waveVertices.emplace_back(x1, y1, *wave_it);
+		waveVertices.emplace_back(x2, y2, *wave_it);
+		x += 15;
+	}
 	
 	std::fstream waveFile;
-
 	// read file
 	waveFile.open("WaveHeight.txt", std::fstream::in);
 	if (!waveFile.is_open())
@@ -77,71 +154,67 @@ int main()
 
 	// fill vector with vertices and colors
 	unsigned int colorDecider = 2;
-	while (!waveFile.eof())
+	/*while (!waveFile.eof())
 	{
 		waveFile >> z;
 
 		if (colorDecider % 2 == 0)
 		{
+			// vertex1 position
 			waveVertices.push_back(x1);	// x1
 			waveVertices.push_back(y1);	// y1
 			waveVertices.push_back(z1);	// z1
-
+			// vertex1 color
 			waveVertices.push_back(r1);	// r1
 			waveVertices.push_back(g1);	// g1
 			waveVertices.push_back(b1);	// b1
 
+			// vertex2 position
 			waveVertices.push_back(x2);	// x2
 			waveVertices.push_back(y2);	// y2
 			waveVertices.push_back(z2);	// z2
 
+			// vertex2 color
 			waveVertices.push_back(r2);	// r1
 			waveVertices.push_back(g2);	// g1
 			waveVertices.push_back(b2);	// b1
 		}
 		else
 		{
+			// vertex3 position
 			waveVertices.push_back(x1);	// x1
 			waveVertices.push_back(y1);	// y1
 			waveVertices.push_back(z1);	// z1
 
+			// vertex3 color
 			waveVertices.push_back(r3);	// r1
 			waveVertices.push_back(g3);	// g1
 			waveVertices.push_back(b3);	// b1
 
+			// vertex4 position
 			waveVertices.push_back(x2);	// x2
 			waveVertices.push_back(y2);	// y2
 			waveVertices.push_back(z2);	// z2
 
+			// vertex4 color
 			waveVertices.push_back(r4);	// r1
 			waveVertices.push_back(g4);	// g1
 			waveVertices.push_back(b4);	// b1
 		}
 
-		x += 8;
+		x += 15;
 		colorDecider++;
-	}
-
-	// fill vector with vertices only
-	/*while (!waveFile.eof())
-	{
-		waveFile >> z;
-
-		waveVertices.push_back(x1);
-		waveVertices.push_back(y1);
-		waveVertices.push_back(z1);
-
-		waveVertices.push_back(x2);
-		waveVertices.push_back(y2);
-		waveVertices.push_back(z2);
-
-		x += 8; // length of the polygon
 	}*/
-	//PrintVector(waveVertices);
+	
 
-	// CREATE INDICIES VECTOR ===============================================================================
-	std::vector<int> waveIndicies;
+	// NORMALS
+	
+
+	// CREATE WAVE INDICIES VECTOR ==========================================================================
+
+	std::vector<int> waveIndicies;	// indicies vector
 	unsigned int index = 0;
+	// fill vector with indicies ()
 	for (int i = 0; i < 787; i++)
 	{
 		waveIndicies.push_back(index);
@@ -159,6 +232,34 @@ int main()
 	}
 	//PrintVector(waveIndicies);
 
+	// light source data
+	std::vector<float> lightSource = {
+		// position				// Index of vertex
+		-1.0f,  1.0f, -1.0f,	// A 0
+		 1.0f,  1.0f, -1.0f,	// B 1
+		 1.0f, -1.0f, -1.0f,	// C 2
+		-1.0f, -1.0f, -1.0f,	// D 3
+		-1.0f,  1.0f,  1.0f,	// E 4
+		 1.0f,  1.0f,  1.0f,	// F 5
+		 1.0f, -1.0f,  1.0f,	// G 6
+		-1.0f, -1.0f,  1.0f,	// H 7
+	};
+	std::vector<unsigned int> lightSourceIndicies = {
+		//indicies	// triangles
+		0, 3, 2,	// ADC
+		0, 2, 1,	// ACB
+		1, 2, 6,	// BCG
+		1, 6, 5,	// BGF
+		4, 0, 1,	// EAB
+		4, 1, 5,	// EBF
+		4, 0, 3,	// EAD
+		4, 3, 7,	// EDH
+		7, 3, 2,	// HDC
+		7, 2, 6,	// HCG
+		4, 7, 6,	// EHG
+		4, 6, 5		// EGF
+	};
+
 	// mesh to test color blending ==========================================================================
 	std::vector<float> testVector = {
 		//	 coordinates		color
@@ -174,7 +275,6 @@ int main()
 			4.0f, 1.0f, 0.0f, 0.153f, 0.718f, 0.820f,	// 8 
 			4.0f, 0.0f, 0.0f, 0.051f, 0.388f, 0.514f	// 9 
 	};
-
 	std::vector<int> testIndicies = {
 		0, 1, 3,
 		0, 3, 2,
@@ -224,99 +324,70 @@ int main()
 	glEnable(GL_DEPTH_TEST);
 
 	// shader program compiling and linking
-	Shader myShader("myVertexShader.vs", "myFragmentShader.fs");
+	Shader waveShader("Shaders/waveShader.vs", "Shaders/waveShader.fs");
+	Shader lightingShader("Shaders/lightningShader.vs", "Shaders/lightningShader.fs");	// not in use atm
+	Shader lightSourceShader("Shaders/lightSourceShader.vs", "Shaders/lightSourceShader.fs");
 
-	// creating mesh (20 triangles in NDC)
-	float test2SquareVertices[] = {
-		// position				// indicies of vertices
-		-1.0f,  0.6f,  0.0f,	// A - 0 
-		-1.0f, -0.6f,  0.0f,	// B - 1
-		-0.8f,  0.6f, -0.2f,	// C - 2
-		-0.8f, -0.6f, -0.2f,	// D - 3
-		-0.6f,  0.6f,  0.2f,	// E - 4
-		-0.6f, -0.6f,  0.2f,	// F - 5
-		-0.4f,  0.6f, -0.2f,	// G - 6
-		-0.4f, -0.6f, -0.2f,	// H - 7
-		-0.2f,  0.6f,  0.2f,	// I - 8
-		-0.2f, -0.6f,  0.2f,	// J - 9
-		 0.0f,  0.6f, -0.2f,	// K - 10
-		 0.0f, -0.6f, -0.2f,	// L - 11
-		 0.2f,  0.6f,  0.2f,	// M - 12
-		 0.2f, -0.6f,  0.2f,	// N - 13
-		 0.4f,  0.6f, -0.2f,	// O - 14
-		 0.4f, -0.6f, -0.2f,	// P - 15
-		 0.6f,  0.6f,  0.2f,	// Q - 16
-		 0.6f, -0.6f,  0.2f,	// R - 17
-		 0.8f,  0.6f, -0.2f,	// S - 18
-		 0.8f, -0.6f, -0.2f,	// T - 19
-		 1.0f,  0.6f,  0.0f,	// U - 20
-		 1.0f, -0.6f,  0.0f		// V - 21
-	};
-	unsigned int test2SquareIndicies[] = {
-		0, 1, 3,	// triangle ABD
-		0, 3, 2,	// triangle ADC
-		2, 3, 5,	// triangle CDF
-		2, 5, 4,	// triangle CFE
-		4, 5, 7,	// triangle EFH
-		4, 7, 6,	// triangle EHG
-		6, 7, 9,	// triangle GHJ
-		6, 9, 8,	// triangle GJI
-		8, 9, 11,	// triangle IJL
-		8, 11, 10,	// triangle ILK
-		10, 11, 13,	// triangle KLN
-		10, 13, 12,	// triangle KNM
-		12, 13, 15,	// triangle MNP
-		12, 15, 14,	// triangle MPO
-		14, 15, 17,	// triangle OPR
-		14, 17, 16,	// triangle ORQ
-		16, 17, 19,	// triangle QRT
-		16, 19, 18,	// triangle QTS
-		18, 19, 21,	// triangle STV
-		18, 21, 20	// triangle SVU
-	};
+	// PASS WAVE TO GPU
+	unsigned int waveVAO, waveVBO, waveEBO;
 
-	// PASS DATA TO GPU
-	unsigned int VAO, VBO, EBO;
+	// create and bind wave VAO
+	glGenVertexArrays(1, &waveVAO);
+	glGenBuffers(1, &waveVBO);
+	glGenBuffers(1, &waveEBO);
 
-	// create and bind VAO
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
+	glBindVertexArray(waveVAO);
 
-	glBindVertexArray(VAO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	// allocate memory in GPU and copy there data from data array
+	glBindBuffer(GL_ARRAY_BUFFER, waveVBO);
 	glBufferData(GL_ARRAY_BUFFER, waveVertices.size() * sizeof(waveVertices), &waveVertices.front(), GL_STATIC_DRAW);	// actual
 	//glBufferData(GL_ARRAY_BUFFER, testVector.size() * sizeof(testVector), &testVector.front(), GL_STATIC_DRAW);
 
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	// allocate memory in GPU and copy there data from data array
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, waveEBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, waveIndicies.size() * sizeof(waveIndicies), &waveIndicies.front(), GL_STATIC_DRAW);	// actual
 	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, testIndicies.size() * sizeof(testIndicies), &testIndicies.front(), GL_STATIC_DRAW);
 
 	// position attribute
-	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 6 * sizeof(testVector[0]), (void*)0);	// for color testing
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 6 * sizeof(waveVertices[0]), (void*)0);	// actual
+	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(waveVertices[0]), (void*)0);	// actual
+	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(waveVertices[0]), (void*)0);	// vertices with no color
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(waveVertices[0]), (void*)0);			// actual (vector<Vertex>)
+	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 6 * sizeof(testVector[0]), (void*)0);		// for color testing
 	glEnableVertexAttribArray(0);
 
 	// color attribute
-	//	there is no ACTUAL since my wave has no color
-	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(testVector[0]), (void*)(3 * sizeof(testVector[0])));
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(waveVertices[0]), (void*)(3 * sizeof(waveVertices[0])));	// actual
-	glEnableVertexAttribArray(1);
+	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(waveVertices[0]), (void*)(3 * sizeof(waveVertices[0])));	// actual
+	////glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(testVector[0]), (void*)(3 * sizeof(testVector[0])));
+	//glEnableVertexAttribArray(1);
 
-	myShader.Use();
+	// PASS LIGHT SOURCE TO GPU
+	unsigned int lightVAO, lightVBO, lightEBO;
+	glGenVertexArrays(1, &lightVAO);
+	glGenBuffers(1, &lightVBO);
+	glGenBuffers(1, &lightEBO);
+
+	glBindVertexArray(lightVAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, lightVBO);
+	glBufferData(GL_ARRAY_BUFFER, lightSource.size() * sizeof(lightSource), &lightSource.front(), GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lightEBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, lightSourceIndicies.size() * sizeof(lightSourceIndicies), &lightSourceIndicies.front(), GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(lightSource[0]), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	waveShader.Use();
 
 	// TEST FIELD +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-
+	
 
 	// TEST FIELD ---------------------------------------------------------------------------------------------------------------------------------
 
 	// uncomment this call to draw in wireframe polygons.
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	waveShader.Use();
+	waveShader.setVec3("lightPosition", lightPosition);
 
 	// render loop ==========================================================================================
 	while (!glfwWindowShouldClose(window))
@@ -329,34 +400,50 @@ int main()
 		// input
 		processInput(window);
 		
-		// RENDER
+		// RENDER INITIATION
 		// background color
 		glClearColor(0.72f, 0.79f, 0.96f, 1.0f);	// light grey
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		// WAVE RENDER
 		// activate shader
-		myShader.Use();
-
-		// projection matrix 
-		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)START_WINDOW_WIDTH / (float)START_WINDOW_HEIGHT, 0.1f, 10000.0f);
-		myShader.setMat4("projection", projection);
+		waveShader.Use();
+		// set wave color config
+		glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
+		glm::vec3 objectColor((float)82 / 255, (float)230 / 255, (float)243 / 255);
+		waveShader.setVec3("lightColor", lightColor);
+		waveShader.setVec3("objectColor", objectColor);
 		
-		// camera / view matrix
+		// projection matrix and camera / view matrix
+		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)START_WINDOW_WIDTH / (float)START_WINDOW_HEIGHT, 0.1f, 30000.0f);
 		glm::mat4 view = camera.GetViewMatrix();
-		myShader.setMat4("view", view);
-
+		waveShader.setMat4("projection", projection);
+		waveShader.setMat4("view", view);		
+		
 		// model matrix
 		glm::mat4 model = glm::mat4(1.0f); // set identity matrix is neñessarily
 		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		// WAVE TRANSLATES BY THIS MATRIX (multiplier is the speed of wave)
-		model = glm::translate(model, glm::vec3(-1.0, 0.0, 0.0) * (currentFrame * 175.0f));	
-		myShader.setMat4("model", model);
+		//model = glm::translate(model, glm::vec3(-1.0, 0.0, 0.0) * (currentFrame * 175.0f));	// WAVE TRANSLATES BY THIS MATRIX (multiplier is the speed of wave)
+		waveShader.setMat4("model", model);
 				
-		// render
-		glBindVertexArray(VAO);
-		//glDrawElements(GL_TRIANGLES, 60, GL_UNSIGNED_INT, 0);	// for 20 triangles (indexed)
-		glDrawElements(GL_TRIANGLES, 4722, GL_UNSIGNED_INT, 0);	// for water mesh (actual)
-		//glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);	// for water mesh 
+		// draw wave
+		glBindVertexArray(waveVAO);
+		glDrawElements(GL_TRIANGLES, waveIndicies.size(), GL_UNSIGNED_INT, 0);	// for water mesh (actual)
+		glBindVertexArray(0);
+
+		// LIGHT SOURCE RENDER
+		// matrices can be configured in any order, order in multiplication in shaders - thats what really matters
+		lightSourceShader.Use();
+		lightSourceShader.setMat4("projection", projection);	
+		lightSourceShader.setMat4("view", view);
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, lightPosition);
+		model = glm::scale(model, glm::vec3(15.0f));
+		lightSourceShader.setMat4("model", model);
+		
+		// draw light source
+		glBindVertexArray(lightVAO);
+		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 
 		// swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -364,9 +451,11 @@ int main()
 		glfwPollEvents();
 	}
 
-	glDeleteVertexArrays(1, &VAO);
-	glDeleteBuffers(1, &VBO);
-	glDeleteBuffers(1, &EBO);
+	glDeleteVertexArrays(1, &waveVAO);
+	glDeleteBuffers(1, &waveVBO);
+	glDeleteBuffers(1, &waveEBO);
+	glDeleteVertexArrays(1, &lightVAO);
+	glDeleteBuffers(1, &lightVBO);
 
 	glfwTerminate();
 	return 0;
@@ -388,6 +477,10 @@ void processInput(GLFWwindow* window)
 		camera.ProcessKeyboard(BACKWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.ProcessKeyboard(RIGHT, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+		camera.ProcessKeyboard(UP, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+		camera.ProcessKeyboard(DOWN, deltaTime);
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
