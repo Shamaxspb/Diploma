@@ -13,16 +13,18 @@ enum Camera_Movement
 	FORWARD,
 	BACKWARD,
 	LEFT,
-	RIGHT
+	RIGHT,
+	UP,
+	DOWN
 };
 
 // Default camera values
-const float YAW			=  24.0f;
-const float PITCH		= -25.0f;
-const float SPEED		=  500.0f;	// default value = 2.5f		//for wave
+const float YAW			=  20.0f;
+const float PITCH		= -20.0f;
+const float SPEED		=  600.0f;	// default value = 2.5f		//for wave
 //const float SPEED		=  2.5f;		// for test polygon
 const float SENSITIVITY	=  0.1f;
-const float ZOOM		=  45.0f;
+const float ZOOM		=  32.0f;
 
 
 class Camera
@@ -88,6 +90,10 @@ public:
 			Position -= Right * velocity;
 		if (direction == RIGHT)
 			Position += Right * velocity;
+		if (direction == UP)
+			Position += Up * velocity * 0.3f;
+		if (direction == DOWN)
+			Position -= Up * velocity * 0.3f;
 	}
 
 	void ProcessMouseMovement(float xOffset, float yOffset, GLboolean constrainPitch = true)
