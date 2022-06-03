@@ -20,4 +20,6 @@ void main()
 
     // light testing
     // color = vec4(0.39, 0.98, 1.0, 1.0); // QUESTIONABLE
+
+    // Normal = mat3(transpose(inverse(model))) * vertexNormal;
 }

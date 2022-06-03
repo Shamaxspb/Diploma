@@ -20,7 +20,7 @@ enum Camera_Movement
 
 // Default camera values
 const float YAW			=  20.0f;
-const float PITCH		= -25.0f;
+const float PITCH		= -20.0f;
 const float SPEED		=  600.0f;	// default value = 2.5f		//for wave
 //const float SPEED		=  2.5f;		// for test polygon
 const float SENSITIVITY	=  0.1f;
@@ -91,9 +91,9 @@ public:
 		if (direction == RIGHT)
 			Position += Right * velocity;
 		if (direction == UP)
-			Position += Up * velocity;
+			Position += Up * velocity * 0.3f;
 		if (direction == DOWN)
-			Position -= Up * velocity;
+			Position -= Up * velocity * 0.3f;
 	}
 
 	void ProcessMouseMovement(float xOffset, float yOffset, GLboolean constrainPitch = true)
