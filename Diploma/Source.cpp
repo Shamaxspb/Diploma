@@ -7,35 +7,19 @@
 
 #include<ShaderProgram.h>
 #include<Camera.h>
+//#include<Mesh.h>
 
-//#include<assimp/config.h>
+#include<assimp/Importer.hpp>
+#include<assimp/scene.h>
+#include<assimp/postprocess.h>
 
 #include<iostream>
 #include<fstream>
 #include<string>
 #include<vector>
 #include<iterator>
+#include"windows.h"
 
-class Vertex
-{
-public:
-	Vertex(float X, float Y, float Z) : x(X), y(Y), z(Z) {}
-private:
-	float x;
-	float y;
-	float z;
-};
-
-
- //function for debug
-template <typename T>
-void PrintVector(const std::vector<T>& vec)
-{
-	for (const auto var : vec)
-	{
-		std::cout << var << std::endl;
-	}
-}
 
 // function prototypes
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -44,8 +28,8 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xOffset, double yOffset);
 void setupMesh(unsigned int& VAO, unsigned int& VBO, std::vector<glm::vec3> object, unsigned int containerElements);
 void setupMesh(unsigned int& VAO, unsigned int& VBO, std::vector<float> object, unsigned int containerElements);
-void setupMesh(unsigned int& VAO, unsigned int& VBO, unsigned int& EBO, std::vector<float> object, std::vector<unsigned int> objectIndicies, unsigned int containerElements);
-
+void setupMesh(unsigned int& VAO, unsigned int& VBO, unsigned int& EBO, std::vector<float> object, 
+	std::vector<unsigned int> objectIndicies, unsigned int containerElements);
 
 // GLOBAL VARIABLES
 // screen
@@ -53,7 +37,7 @@ const int START_WINDOW_WIDTH = 1440;	// created window width
 const int START_WINDOW_HEIGHT = 900;	// created window height
 
 // camera
-Camera camera(glm::vec3(-250.0f, 750.0f, -500.0f));
+Camera camera(glm::vec3(-300.0f, 550.0f, -750.0f));
 // initial mouse coordinates
 float lastX = START_WINDOW_WIDTH / 2.0f;
 float lastY = START_WINDOW_HEIGHT / 2.0f;
@@ -64,9 +48,9 @@ float deltaTime = 0.0f; // time between current frame and last frame
 float lastFrame = 0.0f;
 
 // lightning
-//					x	  z			y
-glm::vec3 lightPos(0.0f, 570.0f, -3250.0f);			// light source position
-glm::vec3 cubePosition(420.0f, 250.0f, 225.0f);		// test cube position
+//					x	     z			y
+glm::vec3 lightPos(750.0f, -195000.0f, 0.0f);		// light source position
+glm::vec3 cubePosition(420.0f, 750.0f, 0.0f);		// test cube position
 
 
 int main()
@@ -128,7 +112,7 @@ int main()
 		inputData.push_back(buffer);
 	}
 
-	// vectors to fill
+	// distribute date between vectors
 	std::vector<float> waveHeight;		// wave height   data
 	std::vector<float> shipRotation;	// ship rotation data
 	std::vector<float> shipDrifting;	// ship drifting data
@@ -150,15 +134,29 @@ int main()
 		++input_it;
 		waveHeight.push_back(*input_it);	// wave height
 	}
-	//PrintVector(shipDrifting);
-	//PrintVector(shipRotation);
-	//PrintVector(waveHeight);
 
+	// convert shipDrifting to glm::vec3
+	std::vector<glm::vec3> shipDriftingV3;
+	for (auto sd_i = shipDrifting.begin(); sd_i != shipDrifting.end(); )
+	{
+		float x, y, z;
+		x = *sd_i;
+		sd_i++;
+		y = *sd_i;
+		sd_i++;
+		z = *sd_i;
+		shipDriftingV3.emplace_back(x, y, z);
+		if (sd_i != shipDrifting.end())
+		{
+			sd_i++;
+		}
+	}
+	
 
 	// WAVE FORM CONFIGURATION ============================================================================== Wave config
 
 	float x = 0;					// polygon length
-	float y = 10000;				// polygon width
+	float y = 50000;				// polygon width
 
 
 	// TEMPORARY DATA CONTAINERS ============================================================================ Temporary Containers
@@ -177,7 +175,7 @@ int main()
 	std::vector<glm::vec3> waveCoords; 
 	auto wave_current = waveHeight.begin();
 	auto wave_next = waveHeight.begin();
-	advance(wave_next, 1);
+	std::advance(wave_next, 1);
 	x = 0;	// reset x to default value
 	for (int i = 0; i < waveHeight.size() - 1; i++)
 	{
@@ -201,10 +199,10 @@ int main()
 	// vector with wave normals
 	std::vector<glm::vec3> waveNormals;
 	auto ci = waveCoordsUnique.begin();	// current  vertex iterator
-	advance(ci, 1);
+	std::advance(ci, 1);
 	auto pi = waveCoordsUnique.begin();	// parallel vertex iterator
 	auto fi = waveCoordsUnique.begin();	// further  vertex iterator
-	advance(fi, 3);
+	std::advance(fi, 3);
 
 	int size = 1574 / 2;
 	for (int i = 0; i < size; i++)
@@ -263,78 +261,6 @@ int main()
 			break;
 		}
 	}
-
-	std::vector<glm::vec3> wave2;
-	/*
-	// polygon 1
-	wave2.emplace_back(0.0f, 100.0f, -40.911f);
-	wave2.emplace_back(0.585f, 0.0f, -0.811f);
-	wave2.emplace_back(0.0f, -100.0f, -40.911f);
-	wave2.emplace_back(0.585f, 0.0f, -0.811f);
-	wave2.emplace_back(15.0f, -100.0f, -30.097f);
-	wave2.emplace_back(0.585f, 0.0f, -0.811f);
-	wave2.emplace_back(0.0f, 100.0f, -40.911f);
-	wave2.emplace_back(0.585f, 0.0f, -0.811f);
-	wave2.emplace_back(15.0f, 100.0f, -30.097f);
-	wave2.emplace_back(0.585f, 0.0f, -0.811f);
-	wave2.emplace_back(15.0f, -100.0f, -30.097f);
-	wave2.emplace_back(0.585f, 0.0f, -0.811f);
-	// polygon 2
-	wave2.emplace_back(15.0f, 100.0f, -30.097f);
-	wave2.emplace_back(0.600f, 0.0f, -0.799f);
-	wave2.emplace_back(15.0f, -100.0f, -30.097f);
-	wave2.emplace_back(0.600f, 0.0f, -0.799f);
-	wave2.emplace_back(30.0f, -100.0f, -18.839f);
-	wave2.emplace_back(0.600f, 0.0f, -0.799f);
-	wave2.emplace_back(15.0f, 100.0f, -30.097f);
-	wave2.emplace_back(0.600f, 0.0f, -0.799f);
-	wave2.emplace_back(30.0f, 100.0f, -18.839f);
-	wave2.emplace_back(0.600f, 0.0f, -0.799f);
-	wave2.emplace_back(30.0f, -100.0f, -18.839f);
-	wave2.emplace_back(0.600f, 0.0f, -0.799f);
-	// polygon 3
-	wave2.emplace_back(30.0f, 100.0f, -18.839f);
-	wave2.emplace_back(0.577f, 0.0f, -0.817f);
-	wave2.emplace_back(30.0f, -100.0f, -18.839f);
-	wave2.emplace_back(0.577f, 0.0f, -0.817f);
-	wave2.emplace_back(45.0f, -100.0f, -8.249f);
-	wave2.emplace_back(0.577f, 0.0f, -0.817f);
-	wave2.emplace_back(30.0f, 100.0f, -18.839f);
-	wave2.emplace_back(0.577f, 0.0f, -0.817f);
-	wave2.emplace_back(45.0f, 100.0f, -8.249f);
-	wave2.emplace_back(0.577f, 0.0f, -0.817f);
-	wave2.emplace_back(45.0f, -100.0f, -8.249f);
-	wave2.emplace_back(0.577f, 0.0f, -0.817f);*/
-
-	// create wave vertices vector
-	// variables to fill waveVertices vector:
-	std::vector<Vertex> waveVertices;	// - vertices with colors vector
-	// - TEST colors (converting to 0:1 scope)
-	float r1 = (float) 55 / 255, g1 = (float)219 / 255, b1 = (float)230 / 255;	// color 1 (Turquoise)
-	float r2 = (float)100 / 255, g2 = (float)250 / 255, b2 = (float)255 / 255;	// color 2 (Electric)
-	float r3 = (float) 82 / 255, g3 = (float)230 / 255, b3 = (float)243 / 255;	// color 3 (Spray)
-	float r4 = (float) 21 / 255, g4 = (float)226 / 255, b4 = (float)233 / 255;	// color 4 (Bright turquoise)
-			
-	// wave indicies
-	std::vector<unsigned int> waveIndicies;	// indicies vector
-	unsigned int index = 0;
-	// fill vector with indicies ()
-	for (int i = 0; i < 787; i++)
-	{
-		waveIndicies.push_back(index);
-		index += 1;
-		waveIndicies.push_back(index);
-		index += 2;
-		waveIndicies.push_back(index);
-		index -= 3;
-		waveIndicies.push_back(index);
-		index += 3;
-		waveIndicies.push_back(index);
-		index -= 1;
-		waveIndicies.push_back(index);
-		index += 0;
-	}
-	//PrintVector(waveIndicies);
 
 	// CREATE LIGHT SOURCE ================================================================================== Light Source
 	// light source data
@@ -414,118 +340,136 @@ int main()
 
 
 	// SHADERS ============================================================================================== Shaders
+	
 	// shader program compiling and linking
 	Shader lightingShader("Shaders/lightingShader.vs", "Shaders/lightingShader.fs");
 	Shader lightSourceShader("Shaders/lightSourceShader.vs", "Shaders/lightSourceShader.fs");
 
 
 	// CREATE OBJECTS ======================================================================================= Objects
+	
 	// create wave 
 	unsigned int waveVAO, waveVBO;
 	setupMesh(waveVAO, waveVBO, wave, 2);
-
-	// TEST WAVE
-	/*
-	unsigned int wave2VAO, wave2VBO;
-	glGenVertexArrays(1, &wave2VAO);
-	glGenBuffers(1, &wave2VBO);
-
-	glBindVertexArray(wave2VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, wave2VBO);
-	glBufferData(GL_ARRAY_BUFFER, wave2.size() * sizeof(glm::vec3), &wave2.front(), GL_DYNAMIC_DRAW);
-
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 2 * sizeof(wave2[0]), (void*)0);
-	glEnableVertexAttribArray(0);
-
-	// normals attribute
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 2 * sizeof(wave2[0]), (void*)(2 * sizeof(wave2[0])));
-	glEnableVertexAttribArray(1);*/
 
 	// create light source
 	unsigned int lightVAO, lightVBO, lightEBO;
 	setupMesh(lightVAO, lightVBO, lightEBO, lightSource, lightSourceIndicies, 3);
 
-	// create cube 
+	// create test cube 
 	unsigned int cubeVAO, cubeVBO; 
 	setupMesh(cubeVAO, cubeVBO, testCube, 6);
 
-	// TEST FIELD +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+	// PRE-RENDER CONIFGURATION ================================================================================ Pre-render config
+	
+	// OUT OF LOOP CONFIGS
+	// iterators
+	auto rotation_it = shipRotation.begin();
+	auto rotation_end = shipRotation.rbegin();
+	std::advance(rotation_it, 50);
 
+	auto drifting_it = shipDriftingV3.begin();
+	auto drifting_end = shipDriftingV3.rbegin();
+	std::advance(drifting_it, 50);
 
-	// TEST FIELD ---------------------------------------------------------------------------------------------------------------------------------
+	wave_it = waveHeight.begin();
+	auto wave_end = waveHeight.rbegin();
+	std::advance(wave_it, 50);
+
+	float shipX = 0.0f;
+	glm::vec3 initialWavePosition(0.0f, 0.0f, 0.0f);		// wave basis
+	glm::vec3 initialShipPosition(1250.0f, 50.0f,1500.0f);	// ship basis
 
 	// uncomment this call to draw in wireframe polygons.
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-
-	// render loop ==========================================================================================
+	// RENDER LOOP ========================================================================================== Render Loop
 	while (!glfwWindowShouldClose(window))
 	{
-		//per-frame logic
+		// per-frame logic
 		float currentFrame	= static_cast<float>(glfwGetTime());	// getting current time of frame
 		deltaTime			= currentFrame - lastFrame;
 		lastFrame			= currentFrame;
+
+		// wave and ship deltas
+		glm::vec3 waveMovement(shipX, 0.0f, 0.0f);		// wave delta
+		glm::vec3 surfaceContact(0.0f, *wave_it, 0.0f);	// object bottom and wave surface synchronisation
+		glm::vec3 shipDeltaPos = *drifting_it * 0.5f;	// ship drifting delta
+
+		// rotation deltas
+		float deltaPitch, deltaRoll, deltaYaw;
+		deltaPitch = *rotation_it;
+		if (*rotation_it != *rotation_end)
+			rotation_it++;
+		deltaRoll = *rotation_it;
+		if (*rotation_it != *rotation_end)
+			rotation_it++;
+		deltaYaw = *rotation_it;
 
 		// input
 		processInput(window);
 		
 
 		// RENDER INITIATION
-		// background color
-		glClearColor(0.72f, 0.79f, 0.96f, 1.0f);	// light grey
+		glClearColor(0.72f, 0.79f, 0.96f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// WAVE CONFIGURATION
 		// colors
-		glm::vec3 lightColor((float)243/255, (float)218 / 255, (float)170 / 255);
-		glm::vec3 objectColor((float)82 / 255, (float)230 / 255, (float)243 / 255);	// wave color
-		// activate shader
+		glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
+		glm::vec3 objectColor((float)0 / 255, (float)116 / 255, (float)142 / 255);	// wave color
+		// activate shader and pass there matricec
 		lightingShader.Use();
-		lightingShader.setVec3("objectColor", objectColor);	// test cube config
+		lightingShader.setVec3("objectColor", objectColor);
 		lightingShader.setVec3("lightColor", lightColor);
-		lightingShader.setVec3("lightPosition", lightPos);
+		lightingShader.setVec3("lightPos", lightPos/* * glm::vec3(0.0f, -90.0f, 0.0f)*/);
 		lightingShader.setVec3("viewPos", camera.Position);		
 		// projection matrix and camera / view matrix
-		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)START_WINDOW_WIDTH / (float)START_WINDOW_HEIGHT, 0.1f, 20000.0f);
+		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)START_WINDOW_WIDTH / (float)START_WINDOW_HEIGHT, 0.1f, 200000.0f);
 		glm::mat4 view = camera.GetViewMatrix();
 		lightingShader.setMat4("projection", projection);
 		lightingShader.setMat4("view", view);
 		// model matrix
 		glm::mat4 model = glm::mat4(1.0f); // set identity matrix is neñessarily
 		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		model = glm::translate(model, glm::vec3(-1.0, 0.0, 0.0) * (currentFrame * 175.0f));	// WAVE TRANSLATES BY THIS MATRIX (multiplier is the speed of wave)
+		//model = glm::translate(model, glm::vec3(-1.0, 0.0, 0.0) * (currentFrame * 150.0f));	// WAVE TRANSLATES BY THIS MATRIX (multiplier is the speed of wave)
+		model = glm::translate(model, initialWavePosition + waveMovement);
 		lightingShader.setMat4("model", model);
 		// draw wave
 		glBindVertexArray(waveVAO);
-		//glDrawElements(GL_TRIANGLES, waveIndicies.size(), GL_UNSIGNED_INT, 0);	// for water mesh (actual)
-		glDrawArrays(GL_TRIANGLES, 0, wave.size()); // FRAME NOT IN MODULE ERROR
+		glDrawArrays(GL_TRIANGLES, 0, wave.size() / 3);
 		glBindVertexArray(0);
 
 
 		// TEST CUBE CONFIGURATION
+		// rotation
 		lightingShader.Use();
 		lightingShader.setVec3("objectColor", 1.0, 0.4f, 0.0f);
 		lightingShader.setVec3("lightColor", lightColor);
 		lightingShader.setMat4("projection", projection);
 		lightingShader.setMat4("view", view);
 		model = glm::mat4(1.0f);
-		model = glm::translate(model, cubePosition);
+		// drifting
+		model = glm::translate(model, initialShipPosition + (surfaceContact + shipDeltaPos));	
+		// rotation
+		model = glm::rotate(model, glm::radians(deltaPitch), glm::vec3(0.0f, 1.0f, 0.0f));	// Pitch
+		model = glm::rotate(model, glm::radians(deltaRoll), glm::vec3(0.0f, 0.0f, 1.0f));	// Roll
+		model = glm::rotate(model, glm::radians(deltaYaw), glm::vec3(1.0f, 0.0f, 0.0f));	// Yaw
 		model = glm::scale(model, glm::vec3(100.0f));
 		lightingShader.setMat4("model", model);
 		// draw test cube
 		glBindVertexArray(cubeVAO);
-		//glDrawElements(GL_TRIANGLES, testCubeIndicies.size(), GL_UNSIGNED_INT, 0);
-		glDrawArrays(GL_TRIANGLES, 0, testCube.size() / 6);	// amount of vertices divided by number of components
+		glDrawArrays(GL_TRIANGLES, 0, testCube.size()/6);	// amount of vertices divided by number of components
 		glBindVertexArray(0);
 
 
 		// LIGHT SOURCE CONFIGURATION
-		// matrices can be configured in any order, order in multiplication in shaders - thats what really matters
+		// matrices should be configured in order: Rotate, Translate, Scale
 		lightSourceShader.Use();
 		lightSourceShader.setMat4("projection", projection);
 		lightSourceShader.setMat4("view", view);
 		model = glm::mat4(1.0f);
+		model = glm::rotate(model, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		model = glm::translate(model, lightPos);
 		model = glm::scale(model, glm::vec3(15.0f));
 		lightSourceShader.setMat4("model", model);
@@ -534,10 +478,26 @@ int main()
 		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 
+		Sleep(35);
 
 		// swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		glfwSwapBuffers(window);
 		glfwPollEvents();
+
+		// scene state change
+		if (*wave_it != *wave_end)
+			wave_it++;
+		else wave_it = waveHeight.begin();
+
+		if (*rotation_it != *rotation_end)
+			rotation_it++;
+		else rotation_it = shipRotation.begin();
+
+		if (*drifting_it != *drifting_end)
+			drifting_it++;
+		else drifting_it = shipDriftingV3.begin();
+
+		shipX -= 25;
 	}
 
 	glDeleteVertexArrays(1, &waveVAO);
@@ -552,7 +512,8 @@ int main()
 	return 0;
 }
 
-// function block
+// FUNCTION BLOCK =========================================================================================== Function Block
+
 void processInput(GLFWwindow* window)
 {
 	// ESC to close the window

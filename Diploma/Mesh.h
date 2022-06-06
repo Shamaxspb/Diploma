@@ -23,6 +23,9 @@ struct Vertex
 	glm::vec2 TexCoords;	// texture won't me using i assume
 	glm::vec3 Tangent;
 	glm::vec3 Bitangent;
+	int m_BoneIDs[MAX_BONE_INFLUENCE];
+	//weights from each bone
+	float m_Weights[MAX_BONE_INFLUENCE];
 
 	// bone indicies which will influence this vertex
 	int m_BoneIDs[MAX_BONE_INFLUENCE];
