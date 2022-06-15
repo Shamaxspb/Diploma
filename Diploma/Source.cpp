@@ -5,9 +5,27 @@
 #include<glm/gtc/matrix_transform.hpp>
 #include<glm/gtc/type_ptr.hpp>
 
-#include<ShaderProgram.h>
+#include<Shader_T.h>
+#include<Texture.h>
+#include<Mesh_T.h>
+#include<Model_T.h>
+#include<Light/light.h>
 #include<Camera.h>
+
+//#include<ShaderProgram.h>
 //#include<Mesh.h>
+//#include<Model.h>
+
+#include"Models/Cube.hpp"
+#include"Models/Lamp.hpp"
+
+//#include<ShipMesh.h>
+//#include<ShipModel.h>
+//#include<filesystem.h>
+//#include<FILE_3D.h>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include"stb_image.h"
 
 #include<assimp/Importer.hpp>
 #include<assimp/scene.h>
@@ -15,11 +33,14 @@
 
 #include<iostream>
 #include<fstream>
+#include<sstream>
+#include<streambuf>
 #include<string>
 #include<vector>
 #include<iterator>
 #include"windows.h"
 
+using namespace std;
 
 // function prototypes
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -29,7 +50,7 @@ void scroll_callback(GLFWwindow* window, double xOffset, double yOffset);
 void setupMesh(unsigned int& VAO, unsigned int& VBO, std::vector<glm::vec3> object, unsigned int containerElements);
 void setupMesh(unsigned int& VAO, unsigned int& VBO, std::vector<float> object, unsigned int containerElements);
 void setupMesh(unsigned int& VAO, unsigned int& VBO, unsigned int& EBO, std::vector<float> object, 
-	std::vector<unsigned int> objectIndicies, unsigned int containerElements);
+	std::vector<unsigned int> objectIndices, unsigned int containerElements);
 
 // GLOBAL VARIABLES
 // screen
@@ -275,8 +296,8 @@ int main()
 		 1.0f, -1.0f,  1.0f,	// G 6
 		-1.0f, -1.0f,  1.0f,	// H 7
 	};
-	std::vector<unsigned int> lightSourceIndicies = {
-		//indicies	// triangles
+	std::vector<unsigned int> lightSourceIndices = {
+		//indices	// triangles
 		0, 3, 2,	// ADC
 		0, 2, 1,	// ACB
 		1, 2, 6,	// BCG
@@ -338,13 +359,52 @@ int main()
 		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f	// D
 	};
 
+	
+
+
+	SpotLight s =
+	{
+		camera.Position, camera.Front,
+		glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(20.0f)),
+		glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(1.0f)
+	};
+
+	// SHIP MODEL =========================================================================================== Ship model
+
+	stbi_set_flip_vertically_on_load(true);
+	//Model Ship("D:/Programming/Projects/Diploma/Diploma/Diploma/Models/S60_2400.obj");
+	//Model Ship("D:/Programming/Projects/Diploma/Diploma/Diploma/backpack/backpack.obj");
+	//ShipModel myShip("D:/Programming/Projects/Diploma/Diploma/Diploma/Models/S60_2400.obj");
+
+	
 
 	// SHADERS ============================================================================================== Shaders
 	
 	// shader program compiling and linking
 	Shader lightingShader("Shaders/lightingShader.vs", "Shaders/lightingShader.fs");
 	Shader lightSourceShader("Shaders/lightSourceShader.vs", "Shaders/lightSourceShader.fs");
+	Shader modelShader("Shaders/model_loading.vs", "Shaders/model_loading.fs");
 
+	Shader shaderT ("Shaders/myObject.vs", "Shaders/myObject.fs");
+	Shader lampShaderT ("Shaders/myObject.vs", "Shaders/Lamp.fs");
+
+	Cube cube(Material::emerald, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.75f));
+	cube.init();
+
+	Lamp lamp(glm::vec3(1.0f), glm::vec3(1.0f), glm::vec3(1.0f), glm::vec3(1.0f), glm::vec3(-1.0f, -0.5f, -0.5f), glm::vec3(0.25f));
+	lamp.init();
+
+	glm::vec3 pointLightPositions[] = {
+		glm::vec3(0.7f,  0.2f,   2.0f),
+		glm::vec3(2.3f, -3.3f, -4.0f),
+		glm::vec3(-4.0f,  2.0f, -12.0f),
+		glm::vec3(0.0f,  0.0f, -3.0f),
+	};
+
+	DirLight dirLight = { glm::vec3(-0.2, -1.0f, -0.3f), glm::vec3(0.1f), glm::vec3(0.4f), glm::vec3(0.75f) };
+
+	Model m(glm::vec3(0.0f), glm::vec3(0.25f));
+	m.loadModel("Models/lotr_troll/scene.gltf");
 
 	// CREATE OBJECTS ======================================================================================= Objects
 	
@@ -354,7 +414,7 @@ int main()
 
 	// create light source
 	unsigned int lightVAO, lightVBO, lightEBO;
-	setupMesh(lightVAO, lightVBO, lightEBO, lightSource, lightSourceIndicies, 3);
+	setupMesh(lightVAO, lightVBO, lightEBO, lightSource, lightSourceIndices, 3);
 
 	// create test cube 
 	unsigned int cubeVAO, cubeVBO; 
@@ -367,7 +427,7 @@ int main()
 	// iterators
 	auto rotation_it = shipRotation.begin();
 	auto rotation_end = shipRotation.rbegin();
-	std::advance(rotation_it, 50);
+	std::advance(rotation_it, 150);
 
 	auto drifting_it = shipDriftingV3.begin();
 	auto drifting_end = shipDriftingV3.rbegin();
@@ -414,36 +474,70 @@ int main()
 		glClearColor(0.72f, 0.79f, 0.96f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		shaderT.activate();
+		shaderT.set3Float("lightPos", lamp.pos);
+		shaderT.set3Float("viewPos", camera.Position);
+
+		shaderT.set3Float("light.ambient", lamp.ambient);
+		shaderT.set3Float("light.diffuse", lamp.diffuse);
+		shaderT.set3Float("light.specular", lamp.specular);
+
+		glm::mat4 view = glm::mat4(1.0f);
+		glm::mat4 model = glm::mat4(1.0f);
+		glm::mat4 projection = glm::mat4(1.0f);
+
+		view = camera.GetViewMatrix();
+		projection = glm::perspective(glm::radians(camera.Zoom), (float)START_WINDOW_WIDTH / (float)START_WINDOW_HEIGHT, 0.1f, 200000.0f);
+
+		shaderT.setMat4("view", view);
+		shaderT.setMat4("projection", projection);
+
+		cube.render(shaderT);
+
+		lampShaderT.activate();
+		lampShaderT.setMat4("view", view);
+		lampShaderT.setMat4("projection", projection);
+		lamp.render(lampShaderT);
+
+
+
+		dirLight.render(shaderT);
+
+		s.position = camera.Position;
+		s.direction = camera.Front;
+		s.render(shaderT);
+
 		// WAVE CONFIGURATION
 		// colors
 		glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
 		glm::vec3 objectColor((float)0 / 255, (float)116 / 255, (float)142 / 255);	// wave color
 		// activate shader and pass there matricec
-		lightingShader.Use();
+		//lightingShader.Use();
+		lightingShader.activate();
 		lightingShader.setVec3("objectColor", objectColor);
 		lightingShader.setVec3("lightColor", lightColor);
 		lightingShader.setVec3("lightPos", lightPos/* * glm::vec3(0.0f, -90.0f, 0.0f)*/);
 		lightingShader.setVec3("viewPos", camera.Position);		
 		// projection matrix and camera / view matrix
-		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)START_WINDOW_WIDTH / (float)START_WINDOW_HEIGHT, 0.1f, 200000.0f);
-		glm::mat4 view = camera.GetViewMatrix();
+		projection = glm::perspective(glm::radians(camera.Zoom), (float)START_WINDOW_WIDTH / (float)START_WINDOW_HEIGHT, 0.1f, 200000.0f);
 		lightingShader.setMat4("projection", projection);
 		lightingShader.setMat4("view", view);
 		// model matrix
-		glm::mat4 model = glm::mat4(1.0f); // set identity matrix is neñessarily
+		model = glm::mat4(1.0f); // set identity matrix is neñessarily
 		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		//model = glm::translate(model, glm::vec3(-1.0, 0.0, 0.0) * (currentFrame * 150.0f));	// WAVE TRANSLATES BY THIS MATRIX (multiplier is the speed of wave)
 		model = glm::translate(model, initialWavePosition + waveMovement);
 		lightingShader.setMat4("model", model);
 		// draw wave
 		glBindVertexArray(waveVAO);
-		glDrawArrays(GL_TRIANGLES, 0, wave.size() / 3);
+		glDrawArrays(GL_TRIANGLES, 0, wave.size());
 		glBindVertexArray(0);
 
 
-		// TEST CUBE CONFIGURATION
+		//// TEST CUBE CONFIGURATION (orange one)
 		// rotation
-		lightingShader.Use();
+		//lightingShader.Use();
+		lightingShader.activate();
 		lightingShader.setVec3("objectColor", 1.0, 0.4f, 0.0f);
 		lightingShader.setVec3("lightColor", lightColor);
 		lightingShader.setMat4("projection", projection);
@@ -452,22 +546,36 @@ int main()
 		// drifting
 		model = glm::translate(model, initialShipPosition + (surfaceContact + shipDeltaPos));	
 		// rotation
-		model = glm::rotate(model, glm::radians(deltaPitch), glm::vec3(0.0f, 1.0f, 0.0f));	// Pitch
-		model = glm::rotate(model, glm::radians(deltaRoll), glm::vec3(0.0f, 0.0f, 1.0f));	// Roll
-		model = glm::rotate(model, glm::radians(deltaYaw), glm::vec3(1.0f, 0.0f, 0.0f));	// Yaw
+		model = glm::rotate(model, glm::radians(deltaPitch), glm::vec3(0.0f, 0.0f, 1.0f));	// Pitch
+		model = glm::rotate(model, glm::radians(deltaRoll), glm::vec3(1.0f, 0.0f, 0.0f));	// Roll
+		model = glm::rotate(model, glm::radians(deltaYaw), glm::vec3(0.0f, 1.0f, 0.0f));	// Yaw
 		model = glm::scale(model, glm::vec3(100.0f));
 		lightingShader.setMat4("model", model);
 		// draw test cube
 		glBindVertexArray(cubeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, testCube.size()/6);	// amount of vertices divided by number of components
+		glDrawArrays(GL_TRIANGLES, 0, testCube.size());
 		glBindVertexArray(0);
 
+		// TEST TEST TEST
+		m.render(shaderT);
+		
+
+		// SHIP CONFIGURATION
+		// ship model, ship mesh
+		/*model = glm::mat4(1.0f);
+		model = glm::translate(model, initialShipPosition);
+		model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+		modelShader.setMat4("model", model);
+		Ship.Draw(modelShader);*/
+		// model, mesh
+		/*glm::mat4 shipModel = glm::mat4(1.0f);
+		shipModel = glm::translate(shipModel, initialShipPosition);
+		shipModel = glm::scale(shipModel, glm::vec3(500.0f, 500.0f, 500.0f));
+		lightingShader.setMat4("model", shipModel);
+		myShip.Draw(lightingShader);*/
 
 		// LIGHT SOURCE CONFIGURATION
 		// matrices should be configured in order: Rotate, Translate, Scale
-		lightSourceShader.Use();
-		lightSourceShader.setMat4("projection", projection);
-		lightSourceShader.setMat4("view", view);
 		model = glm::mat4(1.0f);
 		model = glm::rotate(model, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		model = glm::translate(model, lightPos);
@@ -478,7 +586,7 @@ int main()
 		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 
-		Sleep(35);
+		Sleep(15);
 
 		// swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		glfwSwapBuffers(window);
@@ -507,6 +615,11 @@ int main()
 	glDeleteBuffers(1, &lightEBO);
 	glDeleteVertexArrays(1, &cubeVAO);
 	glDeleteBuffers(1, &cubeVBO);
+
+	cube.cleanup();
+	lamp.cleanup();
+
+	m.cleanup();
 
 	glfwTerminate();
 	return 0;
@@ -611,7 +724,7 @@ void setupMesh(unsigned int& VAO,
 					  unsigned int& VBO, 
 					  unsigned int& EBO, 
 					  std::vector<float> object, 
-					  std::vector<unsigned int> objectIndicies, 
+					  std::vector<unsigned int> objectIndices, 
 					  unsigned int containerElements)
 {
 	unsigned int stride = containerElements * sizeof(object[0]), offset = stride / 2;
@@ -625,7 +738,7 @@ void setupMesh(unsigned int& VAO,
 	glBufferData(GL_ARRAY_BUFFER, object.size() * sizeof(object), &object.front(), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, objectIndicies.size() * sizeof(objectIndicies[0]), &objectIndicies.front(), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, objectIndices.size() * sizeof(objectIndices[0]), &objectIndices.front(), GL_STATIC_DRAW);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, containerElements * sizeof(object[0]), (void*)0);
 	glEnableVertexAttribArray(0);

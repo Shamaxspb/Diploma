@@ -2,9 +2,21 @@
 #pragma once
 //#include "ListOfCPoint3D.h"
 //#include "PolygonPoints.h"
-#include "Frank_lib.h"
+//#include "Frank_lib.h"
 #include <cstdio>
 #include <string>
+#include <iostream>
+#include <fstream>
+
+//class PolygonPoints
+//{
+//
+//};
+
+
+
+
+
 class CStlFILE
 {
 public:

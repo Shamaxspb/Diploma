@@ -24,7 +24,7 @@ const float PITCH		= -10.5f;
 const float SPEED		=  600.0f;	// default value = 2.5f		//for wave
 //const float SPEED		=  2.5f;		// for test polygon
 const float SENSITIVITY	=  0.1f;
-const float ZOOM		=  20.0f;
+const float ZOOM		=  30.0f;
 
 
 class Camera

@@ -124,7 +124,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>assimp-vc140-mt.lib;opengl32.lib;glfw3.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>D:\Programming\OpenGL\Assimp\assimp_test\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>D:\Programming\Projects\Diploma\Diploma\Diploma;D:\Programming\OpenGL\Assimp\assimp_test\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -145,12 +145,36 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="glad.c" />
+    <ClCompile Include="Light\light.cpp" />
+    <ClCompile Include="Material_T.cpp" />
+    <ClCompile Include="Mesh_T.cpp" />
+    <ClCompile Include="Model_T.cpp" />
+    <ClCompile Include="Shader_T.cpp" />
     <ClCompile Include="Source.cpp" />
+    <ClCompile Include="Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Cube.hpp" />
+    <ClInclude Include="FILE_3D.h" />
+    <ClInclude Include="Light\light.h" />
+    <ClInclude Include="Material_T.h" />
+    <ClInclude Include="Mesh_T.h" />
+    <ClInclude Include="Models\Cube.hpp" />
+    <ClInclude Include="Models\Lamp.hpp" />
+    <ClInclude Include="Model_T.h" />
+    <ClInclude Include="shader_m.h" />
+    <ClInclude Include="Shader_T.h" />
+    <ClInclude Include="ShipMesh.h" />
     <ClInclude Include="Mesh.h" />
+    <ClInclude Include="Model.h" />
     <ClInclude Include="ShaderProgram.h" />
+    <ClInclude Include="ShipModel.h" />
+    <ClInclude Include="stb_image.h" />
+    <ClInclude Include="Texture.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\Lamp.fs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

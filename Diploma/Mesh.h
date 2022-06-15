@@ -23,11 +23,8 @@ struct Vertex
 	glm::vec2 TexCoords;	// texture won't me using i assume
 	glm::vec3 Tangent;
 	glm::vec3 Bitangent;
-	int m_BoneIDs[MAX_BONE_INFLUENCE];
-	//weights from each bone
-	float m_Weights[MAX_BONE_INFLUENCE];
-
-	// bone indicies which will influence this vertex
+	
+	// bone indices which will influence this vertex
 	int m_BoneIDs[MAX_BONE_INFLUENCE];
 	// weights from each bone
 	float m_Weights[MAX_BONE_INFLUENCE];
@@ -45,14 +42,13 @@ class Mesh
 public:
 	// mesh data
 	std::vector<Vertex>			vertices;
-	std::vector<unsigned int>	indicies;
+	std::vector<unsigned int>	indices;
 	std::vector<Texture>		textures;
-	unsigned int VAO;
 
-	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indicies, std::vector<Texture> textures)
+	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures)
 	{
 		this->vertices = vertices;
-		this->indicies = indicies;
+		this->indices  = indices;
 		this->textures = textures;
 
 		setupMesh();
@@ -90,7 +86,7 @@ public:
 
 		// draw mesh
 		glBindVertexArray(VAO);
-		glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indicies.size()), GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 
 		// set texture to default
@@ -98,7 +94,7 @@ public:
 	}
 
 private:
-	unsigned int VBO, EBO;
+	unsigned int VAO, VBO, EBO;
 
 	void setupMesh()
 	{
@@ -113,9 +109,9 @@ private:
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
 
-		// bind data to buffer, allocate memory and pass data to GPU (indicies)
+		// bind data to buffer, allocate memory and pass data to GPU (indices)
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicies.size() * sizeof(unsigned int), &indicies[0], GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
 
 		// vertex positions
 		glEnableVertexAttribArray(0);
@@ -148,4 +144,5 @@ private:
 		glBindVertexArray(0);
 	}
 };
+
 #endif

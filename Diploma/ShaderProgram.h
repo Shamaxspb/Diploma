@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef SHADER_H
 #define SHADER_H
 
@@ -57,32 +55,19 @@ public:
 
 		// compile shaders
 		unsigned int vertex, fragment;
-		int success;
-		char infoLog[512];
-
+				
 		// vertex shader
 		vertex = glCreateShader(GL_VERTEX_SHADER);
 		glShaderSource(vertex, 1, &vShaderCode, NULL);
 		glCompileShader(vertex);
-		// check for compile errors
-		glGetShaderiv(vertex, GL_COMPILE_STATUS, &success);
-		if (!success)
-		{
-			glGetShaderInfoLog(vertex, 512, NULL, infoLog);
-			std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-		}
+		checkCompileErrors(vertex, "VERTEX");
 
 		// fragment shader
 		fragment = glCreateShader(GL_FRAGMENT_SHADER);
 		glShaderSource(fragment, 1, &fShaderCode, NULL);
 		glCompileShader(fragment);
 		// check for compile errors
-		glGetShaderiv(fragment, GL_COMPILE_STATUS, &success);
-		if (!success)
-		{
-			glGetShaderInfoLog(fragment, 512, NULL, infoLog);
-			std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-		}
+		checkCompileErrors(fragment, "FRAGMENT");
 
 		// shader program
 		ID = glCreateProgram();
@@ -90,13 +75,7 @@ public:
 		glAttachShader(ID, fragment);
 		glLinkProgram(ID);
 		// check for linking errors
-		glGetProgramiv(ID, GL_LINK_STATUS, &success);
-		if (!success)
-		{
-			glGetProgramInfoLog(ID, 512, NULL, infoLog);
-			std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" <<
-				infoLog << std::endl;
-		}
+		checkCompileErrors(ID, "PROGRAM");
 
 		// delete shaders since they've done their job (already linked to program)
 		glDeleteShader(vertex);
@@ -148,7 +127,7 @@ public:
 	}
 
 	// VEC 4 ------------------------------------------------------------------------
-	void setVec4(const std::string& name, const glm::vec3& value) const
+	void setVec4(const std::string& name, const glm::vec4& value) const
 	{
 		glUniform4fv(glGetUniformLocation(ID, name.c_str()), 1, &value[0]);
 	}
@@ -181,8 +160,8 @@ private:
 	// ------------------------------------------------------------------------
 	void checkCompileErrors(unsigned int shader, std::string type)
 	{
-		int success;
-		char infoLog[1024];
+		GLint success;
+		GLchar infoLog[1024];
 		if (type != "PROGRAM")
 		{
 			glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
@@ -202,7 +181,5 @@ private:
 			}
 		}
 	}
-	
-
 };
 #endif
